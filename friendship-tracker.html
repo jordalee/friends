@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<title>Friends</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #eeecea;
+    --text: #1a1a1a;
+    --text2: #6b6b6b;
+    --text3: #999;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --green-bg: #EAF3DE; --green-text: #27500A;
+    --amber-bg: #FAEEDA; --amber-text: #633806;
+    --red-bg: #FCEBEB; --red-text: #791F1F;
+    --purple-bg: #EEEDFE; --purple-text: #3C3489;
+    --teal-bg: #E1F5EE; --teal-text: #085041;
+    --coral-bg: #FAECE7; --coral-text: #712B13;
+    --pink-bg: #FBEAF0; --pink-text: #72243E;
+    --blue-bg: #E6F1FB; --blue-text: #0C447C;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+      --text: #f2f2f7; --text2: #aeaeb2; --text3: #636366;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+      --green-bg: #27500A; --green-text: #C0DD97;
+      --amber-bg: #633806; --amber-text: #FAC775;
+      --red-bg: #791F1F; --red-text: #F7C1C1;
+      --purple-bg: #3C3489; --purple-text: #CECBF6;
+      --teal-bg: #085041; --teal-text: #9FE1CB;
+      --coral-bg: #712B13; --coral-text: #F5C4B3;
+      --pink-bg: #72243E; --pink-text: #F4C0D1;
+      --blue-bg: #0C447C; --blue-text: #B5D4F4;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Nav */
+  .nav { display: flex; border-bottom: 0.5px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 10; }
+  .nav-btn { flex: 1; padding: 14px 0 12px; font-size: 13px; font-weight: 500; color: var(--text3); background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .nav-btn i { font-size: 20px; }
+  .nav-btn.active { color: var(--text); }
+  .nav-btn.active i { color: #534AB7; }
+
+  /* Pages */
+  .page { display: none; padding: 0 0 calc(16px + var(--safe-bottom)); }
+  .page.active { display: block; }
+
+  /* Header */
+  .page-header { padding: 18px 16px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .page-title { font-size: 22px; font-weight: 500; }
+  .btn-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--bg2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); font-size: 18px; }
+  .btn-icon:active { opacity: 0.6; }
+
+  /* Search */
+  .search-wrap { padding: 0 16px 12px; }
+  .search-wrap input { width: 100%; padding: 10px 14px; background: var(--bg2); border: none; border-radius: var(--radius-sm); font-size: 15px; color: var(--text); }
+  .search-wrap input::placeholder { color: var(--text3); }
+
+  /* Filter pills */
+  .pill-row { display: flex; gap: 8px; padding: 0 16px 14px; overflow-x: auto; scrollbar-width: none; }
+  .pill-row::-webkit-scrollbar { display: none; }
+  .pill { padding: 6px 14px; border-radius: 99px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--border2); background: none; color: var(--text2); cursor: pointer; white-space: nowrap; }
+  .pill.active { background: var(--text); color: var(--bg); border-color: transparent; }
+
+  /* Stat row */
+  .stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0 16px 16px; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-bottom: 3px; }
+  .stat-val { font-size: 24px; font-weight: 500; }
+
+  /* Section label */
+  .section-label { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 16px 8px; }
+
+  /* Friend list */
+  .friend-list { display: flex; flex-direction: column; }
+  .friend-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 0.5px solid var(--border); cursor: pointer; background: var(--bg); }
+  .friend-row:active { background: var(--bg2); }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; flex-shrink: 0; }
+  .friend-row-body { flex: 1; min-width: 0; }
+  .friend-row-name { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .friend-row-sub { font-size: 13px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .health-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: #639922; }
+  .dot-amber { background: #BA7517; }
+  .dot-red { background: #E24B4A; }
+
+  /* Tier label */
+  .tier-header { padding: 14px 16px 6px; font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; background: var(--bg); }
+
+  /* Badge */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: var(--green-bg); color: var(--green-text); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-red { background: var(--red-bg); color: var(--red-text); }
+  .badge-purple { background: var(--purple-bg); color: var(--purple-text); }
+  .badge-teal { background: var(--teal-bg); color: var(--teal-text); }
+
+  /* Today page */
+  .today-section { padding: 0 16px 20px; }
+  .today-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .today-card:active { background: var(--bg2); }
+  .today-card-body { flex: 1; min-width: 0; }
+  .today-card-name { font-size: 15px; font-weight: 500; }
+  .today-card-reason { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .log-quick-btn { padding: 7px 14px; border-radius: var(--radius-sm); background: var(--text); color: var(--bg); border: none; font-size: 13px; font-weight: 500; cursor: pointer; flex-shrink: 0; }
+  .log-quick-btn:active { opacity: 0.7; }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text3); font-size: 15px; }
+  .empty-state i { font-size: 36px; display: block; margin-bottom: 12px; }
+
+  /* Detail view */
+  .detail-view { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 50; overflow-y: auto; }
+  .detail-view.open { display: block; }
+  .detail-header { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 0.5px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  .back-btn { font-size: 15px; color: #534AB7; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 0; }
+  .detail-hero { padding: 24px 16px 16px; display: flex; align-items: center; gap: 16px; }
+  .avatar-lg { width: 64px; height: 64px; border-radius: 50%; font-size: 22px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .detail-name { font-size: 22px; font-weight: 500; }
+  .detail-meta { font-size: 14px; color: var(--text2); margin-top: 3px; }
+  .detail-section { padding: 0 16px 16px; }
+  .detail-section-title { font-size: 12px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .detail-card { background: var(--bg2); border-radius: var(--radius); padding: 14px; }
+  .detail-row-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .detail-row-item:last-child { border-bottom: none; }
+  .detail-row-label { font-size: 13px; color: var(--text2); min-width: 80px; padding-top: 1px; }
+  .detail-row-val { font-size: 14px; flex: 1; }
+  .notes-block { font-size: 14px; color: var(--text2); line-height: 1.6; padding: 12px 14px; background: var(--bg2); border-radius: var(--radius); }
+  .log-item { padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .log-item:last-child { border-bottom: none; }
+  .log-item-top { display: flex; justify-content: space-between; align-items: center; }
+  .log-type-label { font-size: 14px; font-weight: 500; }
+  .log-date-label { font-size: 12px; color: var(--text3); }
+  .log-note-label { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .rating-stars { display: flex; gap: 4px; margin-top: 3px; }
+  .star { font-size: 13px; color: #BA7517; }
+  .star.empty { color: var(--border2); }
+  .detail-action-row { display: flex; gap: 10px; padding: 0 16px 16px; }
+  .btn-full { flex: 1; padding: 13px; border-radius: var(--radius); font-size: 15px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--border2); background: none; color: var(--text); }
+  .btn-full.primary { background: #534AB7; color: #fff; border-color: transparent; }
+  .btn-full:active { opacity: 0.7; }
+
+  /* Modals */
+  .modal-wrap { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: flex-end; }
+  .modal-wrap.open { display: flex; }
+  .modal { background: var(--bg); border-radius: 20px 20px 0 0; padding: 20px 16px calc(20px + var(--safe-bottom)); width: 100%; max-height: 92vh; overflow-y: auto; }
+  .modal-title { font-size: 17px; font-weight: 500; margin-bottom: 16px; }
+  .modal-close { float: right; background: var(--bg2); border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 16px; cursor: pointer; color: var(--text2); display: flex; align-items: center; justify-content: center; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 13px; color: var(--text2); margin-bottom: 6px; display: block; }
+  .form-input { width: 100%; padding: 11px 13px; background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); font-size: 15px; color: var(--text); appearance: none; }
+  .form-input:focus { outline: none; border-color: #534AB7; }
+  textarea.form-input { height: 80px; resize: none; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-save { width: 100%; padding: 14px; background: #534AB7; color: #fff; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+  .btn-save:active { opacity: 0.8; }
+  .btn-danger { width: 100%; padding: 14px; background: none; color: var(--red-text); border: 0.5px solid var(--border2); border-radius: var(--radius); font-size: 15px; font-weight: 500; cursor: pointer; margin-top: 8px; }
+
+  /* Rating input */
+  .star-input { display: flex; gap: 8px; }
+  .star-input span { font-size: 26px; cursor: pointer; color: var(--border2); transition: color 0.1s; }
+  .star-input span.on { color: #BA7517; }
+
+  /* Birthday strip */
+  .bday-strip { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--purple-bg); border-radius: var(--radius); margin-bottom: 10px; }
+  .bday-strip-text { flex: 1; }
+  .bday-strip-name { font-size: 14px; font-weight: 500; color: var(--purple-text); }
+  .bday-strip-when { font-size: 12px; color: var(--purple-text); opacity: 0.8; }
+  .bday-avatar { width: 36px; height: 36px; border-radius: 50%; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+  /* Wishlist tag */
+  .wish-tag { display: inline-block; padding: 5px 12px; background: var(--bg2); border-radius: 99px; font-size: 13px; color: var(--text2); margin: 4px 4px 0 0; }
+
+  /* Tabs inside modal */
+  .tab-row { display: flex; gap: 0; border-bottom: 0.5px solid var(--border); margin-bottom: 16px; }
+  .tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 500; color: var(--text3); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+  .tab-btn.active { color: #534AB7; border-bottom-color: #534AB7; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('today')" id="nav-today">
+    <i class="ti ti-home" aria-hidden="true"></i>
+    <span>Today</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('friends')" id="nav-friends">
+    <i class="ti ti-users" aria-hidden="true"></i>
+    <span>Friends</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('stats')" id="nav-stats">
+    <i class="ti ti-chart-bar" aria-hidden="true"></i>
+    <span>Stats</span>
+  </button>
+</nav>
+
+<!-- TODAY PAGE -->
+<div class="page active" id="page-today">
+  <div class="page-header">
+    <span class="page-title">Today</span>
+  </div>
+  <div id="today-content"></div>
+</div>
+
+<!-- FRIENDS PAGE -->
+<div class="page" id="page-friends">
+  <div class="page-header">
+    <span class="page-title">Friends</span>
+    <button class="btn-icon" onclick="openAddFriend()" aria-label="Add friend"><i class="ti ti-plus" aria-hidden="true"></i></button>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="search-input" placeholder="Search friends..." oninput="renderFriends()" />
+  </div>
+  <div class="pill-row" id="filter-pills"></div>
+  <div id="friends-content"></div>
+</div>
+
+<!-- STATS PAGE -->
+<div class="page" id="page-stats">
+  <div class="page-header"><span class="page-title">Stats</span></div>
+  <div id="stats-content"></div>
+</div>
+
+<!-- DETAIL VIEW (full screen overlay) -->
+<div class="detail-view" id="detail-view">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()"><i class="ti ti-chevron-left" aria-hidden="true"></i> Friends</button>
+    <div style="flex:1"></div>
+    <button class="btn-icon" onclick="openEditFriend(currentDetailId)" aria-label="Edit"><i class="ti ti-edit" aria-hidden="true"></i></button>
+  </div>
+  <div id="detail-content"></div>
+</div>
+
+<!-- ADD/EDIT FRIEND MODAL -->
+<div class="modal-wrap" id="friend-modal" onclick="modalBgClick(event,'friend-modal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('friend-modal')" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+    <div class="modal-title" id="friend-modal-title">Add friend</div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('basic')" id="tab-basic">Basic</button>
+      <button class="tab-btn" onclick="switchTab('details')" id="tab-details">Details</button>
+      <button class="tab-btn" onclick="switchTab('wishlist')" id="tab-wishlist">Wishlist</button>
+    </div>
+
+    <div id="tab-pane-basic">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" id="f-name" placeholder="e.g. Marcus Williams" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tier</label>
+          <select class="form-input" id="f-tier">
+            <option value="close">Close</option>
+            <option value="good">Good</option>
+            <option value="casual">Casual</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Group</label><input class="form-input" type="text" id="f-group" placeholder="e.g. University" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" type="text" id="f-loc" placeholder="e.g. Toronto, ON" /></div>
+      <div class="form-group"><label class="form-label">Contact goal</label>
+        <select class="form-input" id="f-freq">
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Every 2 weeks</option>
+          <option value="monthly" selected>Monthly</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="biannually">Every 6 months</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="tab-pane-details" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Birthday</label><input class="form-input" type="date" id="f-bday" /></div>
+        <div class="form-group"><label class="form-label">Relationship status</label>
+          <select class="form-input" id="f-rel">
+            <option value="">–</option>
+            <option value="Single">Single</option>
+            <option value="In a relationship">Dating</option>
+            <option value="Engaged">Engaged</option>
+            <option value="Married">Married</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Job / career</label><input class="form-input" type="text" id="f-job" placeholder="e.g. Designer at Shopify" /></div>
+      <div class="form-group"><label class="form-label">Hobbies & interests</label><input class="form-input" type="text" id="f-hobbies" placeholder="e.g. Tennis, cooking, true crime" /></div>
+      <div class="form-group"><label class="form-label">Family (siblings, partner, pets)</label><input class="form-input" type="text" id="f-family" placeholder="e.g. Sister Emma, dog named Biscuit" /></div>
+      <div class="form-group"><label class="form-label">Upcoming life events</label><input class="form-input" type="text" id="f-events" placeholder="e.g. Moving to NYC in August" /></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="f-notes" placeholder="Anything else worth remembering..."></textarea></div>
+    </div>
+
+    <div id="tab-pane-wishlist" style="display:none">
+      <div class="form-group"><label class="form-label">Things to do together (one per line)</label><textarea class="form-input" style="height:120px" id="f-wishlist" placeholder="Grab ramen at Kingyo&#10;Check out that new rooftop bar&#10;Play golf at Islington"></textarea></div>
+      <div class="form-group"><label class="form-label">Past hangout spots</label><textarea class="form-input" id="f-spots" placeholder="Bar Raval, CN Tower, Pilot Coffee..."></textarea></div>
+    </div>
+
+    <button class="btn-save" onclick="saveFriend()">Save</button>
+    <div id="delete-confirm" style="display:none; margin-top:8px; padding:12px; background:var(--red-bg); border-radius:var(--radius-sm);">
+      <div style="font-size:14px; color:var(--red-text); margin-bottom:10px;">Remove this friend? This can't be undone.</div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="confirmDelete()" style="flex:1; padding:10px; background:#A32D2D; color:#fff; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer;">Yes, remove</button>
+        <button onclick="cancelDelete()" style="flex:1; padding:10px; background:var(--bg2); color:var(--text); border:0.5px solid var(--border2); border-radius:var(--radius-sm); font-size:14px; cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+    <button class="btn-danger" id="delete-btn" onclick="showDeleteConfirm()" style="display:none">Remove friend</button>
+  </div>
+</div>
+
+<!-- LOG HANGOUT MODAL -->
+<div class="modal-wrap" id="log-modal" onclick="modalBgClick(event,'log-modal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('log-modal')" aria-label="Close"><i class="ti ti-x" aria-hidden="true"></i></button>
+    <div class="modal-title" id="log-modal-title">Log hangout</div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select class="form-input" id="log-type">
+        <option value="Hangout">Hangout in person</option>
+        <option value="Call">Phone / video call</option>
+        <option value="Text">Text / DM</option>
+        <option value="Activity">Activity together</option>
+        <option value="Event">Event / celebration</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="log-date" /></div>
+      <div class="form-group"><label class="form-label">Place (optional)</label><input class="form-input" type="text" id="log-place" placeholder="e.g. Bar Raval" /></div>
+    </div>
+    <div class="form-group"><label class="form-label">Rating</label>
+      <div class="star-input" id="star-input">
+        <span onclick="setRating(1)">&#9733;</span>
+        <span onclick="setRating(2)">&#9733;</span>
+        <span onclick="setRating(3)">&#9733;</span>
+        <span onclick="setRating(4)">&#9733;</span>
+        <span onclick="setRating(5)">&#9733;</span>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="log-notes" placeholder="What did you talk about? How was the vibe?"></textarea></div>
+    <button class="btn-save" onclick="saveLog()">Log it</button>
+  </div>
+</div>
+
+<script>
+const FREQ_DAYS = { weekly:7, biweekly:14, monthly:30, quarterly:90, biannually:180 };
+const FREQ_LABEL = { weekly:'Weekly', biweekly:'Every 2 wks', monthly:'Monthly', quarterly:'Quarterly', biannually:'Every 6 mo' };
+const TIER_ORDER = { close:0, good:1, casual:2 };
+const AVATAR_COLORS = [
+  {bg:'#EEEDFE',fg:'#3C3489'},{bg:'#E1F5EE',fg:'#085041'},{bg:'#FBEAF0',fg:'#72243E'},
+  {bg:'#E6F1FB',fg:'#0C447C'},{bg:'#FAEEDA',fg:'#633806'},{bg:'#FAECE7',fg:'#712B13'}
+];
+
+let friends = [];
+let editingId = null;
+let currentDetailId = null;
+let logTargetId = null;
+let currentRating = 0;
+let activeFilter = 'all';
+let currentTab = 'basic';
+
+const STORAGE_KEY = 'friendship_tracker_v1';
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(friends)); } catch(e) {}
+}
+function load() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) friends = JSON.parse(d);
+  } catch(e) {}
+  if (!friends.length) seedData();
+}
+
+function seedData() {
+  const past = d => { const dt = new Date(); dt.setDate(dt.getDate()-d); return dt.toISOString().split('T')[0]; };
+  friends = [
+    { id:1001, name:'Marcus W.', tier:'close', group:'University', loc:'Toronto, ON', freq:'biweekly', bday:'1999-04-15', rel:'Single', job:'Analyst at BMO', hobbies:'Basketball, finance, hiking', family:'Sister Jade', events:'Japan trip in September', notes:'Always down for a game', wishlist:'Watch a Raptors game\nTry Kenzo Ramen', spots:'Bar Raval, Scotiabank Arena', interactions:[{date:past(3),type:'Hangout',place:'Bar Raval',rating:5,notes:'Great vibes, caught up on everything'},{date:past(18),type:'Activity',place:'',rating:4,notes:'Basketball at the courts'}] },
+    { id:1002, name:'Priya S.', tier:'close', group:'High school', loc:'Mississauga, ON', freq:'monthly', bday:'2000-07-22', rel:'In a relationship', job:'Designer at KOHO', hobbies:'Pottery, travel, coffee', family:'', events:'Moving downtown in October', notes:'Ask about the new role', wishlist:'Try that pottery class on King St\nBrunch at Café Cancan', spots:'Pilot Coffee, Café Cancan', interactions:[{date:past(38),type:'Hangout',place:'Pilot Coffee',rating:5,notes:'Long overdue catch-up'}] },
+    { id:1003, name:'Dylan T.', tier:'good', group:'Work', loc:'Toronto, ON', freq:'monthly', bday:'1998-11-03', rel:'Single', job:'Tax associate at Deloitte', hobbies:'Golf, markets, podcasts', family:'', events:'', notes:'Met at Deloitte, mutual interest in PE', wishlist:'Golf round at Islington\nNetworking dinner', spots:'Bar Raval, Canoe', interactions:[{date:past(14),type:'Hangout',place:'Canoe',rating:4,notes:'Talked career paths and markets'}] },
+    { id:1004, name:'Aisha K.', tier:'good', group:'Golf', loc:'Oakville, ON', freq:'quarterly', bday:'1997-02-10', rel:'Married', job:'Financial planner', hobbies:'Golf, yoga, reading', family:'Husband Tariq', events:'', notes:'Great swing tips, ask about membership', wishlist:'Play the back 9 at Islington\nLearn putting drills from her', spots:'Islington Golf Club', interactions:[{date:past(85),type:'Activity',place:'Islington Golf Club',rating:5,notes:'Nine holes, learned a ton'}] },
+    { id:1005, name:'Jamie L.', tier:'casual', group:'Neighbourhood', loc:'Toronto, ON', freq:'quarterly', bday:'', rel:'', job:'', hobbies:'Running, cooking', family:'', events:'', notes:'Meet at the GO station sometimes', wishlist:'Grab coffee sometime', spots:'', interactions:[] },
+  ];
+  save();
+}
+
+function initials(name) { return name.trim().split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function avatarColor(id) { return AVATAR_COLORS[id % AVATAR_COLORS.length]; }
+
+function daysSince(dateStr) {
+  if (!dateStr) return 9999;
+  return Math.floor((Date.now() - new Date(dateStr)) / 86400000);
+}
+
+function lastInteractionDate(f) {
+  if (!f.interactions || !f.interactions.length) return null;
+  return [...f.interactions].sort((a,b)=>b.date.localeCompare(a.date))[0].date;
+}
+
+function health(f) {
+  const target = FREQ_DAYS[f.freq] || 30;
+  const d = daysSince(lastInteractionDate(f));
+  if (d <= target) return 'green';
+  if (d <= target * 1.8) return 'amber';
+  return 'red';
+}
+
+function lastContactLabel(f) {
+  const last = lastInteractionDate(f);
+  if (!last) return 'Never connected';
+  const d = daysSince(last);
+  if (d === 0) return 'Today';
+  if (d === 1) return 'Yesterday';
+  if (d < 7) return `${d}d ago`;
+  if (d < 30) return `${Math.floor(d/7)}w ago`;
+  if (d < 365) return `${Math.floor(d/30)}mo ago`;
+  return `${Math.floor(d/365)}y ago`;
+}
+
+function daysUntilBirthday(bdayStr) {
+  if (!bdayStr) return null;
+  const today = new Date(); const bday = new Date(bdayStr);
+  let next = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+  if (next < today) next.setFullYear(today.getFullYear()+1);
+  return Math.ceil((next - today) / 86400000);
+}
+
+// Pages
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('active');
+  if (page==='today') renderToday();
+  if (page==='friends') renderFriends();
+  if (page==='stats') renderStats();
+}
+
+// TODAY
+function renderToday() {
+  const el = document.getElementById('today-content');
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  const overdue = friends.filter(f=>health(f)==='red').sort((a,b)=>TIER_ORDER[a.tier]-TIER_ORDER[b.tier]);
+  const dueSoon = friends.filter(f=>health(f)==='amber').sort((a,b)=>TIER_ORDER[a.tier]-TIER_ORDER[b.tier]);
+  const upcoming = friends.filter(f=>{
+    const d = daysUntilBirthday(f.bday);
+    return d !== null && d <= 14;
+  }).sort((a,b)=>daysUntilBirthday(a.bday)-daysUntilBirthday(b.bday));
+  const withEvents = friends.filter(f=>f.events && f.events.trim());
+
+  let html = `<div style="padding:0 16px 20px;"><div style="font-size:14px;color:var(--text3);">${todayStr}</div></div>`;
+
+  if (upcoming.length) {
+    html += `<div class="today-section"><div class="section-label" style="margin-bottom:10px;">Upcoming birthdays</div>`;
+    upcoming.forEach(f => {
+      const d = daysUntilBirthday(f.bday);
+      const clr = avatarColor(f.id % 6);
+      html += `<div class="bday-strip" onclick="openDetail(${f.id})">
+        <div class="bday-avatar" style="background:${clr.bg};color:${clr.fg};">${initials(f.name)}</div>
+        <div class="bday-strip-text">
+          <div class="bday-strip-name">${f.name}</div>
+          <div class="bday-strip-when">${d===0?'Today!':d===1?'Tomorrow':`In ${d} days`}</div>
+        </div>
+        <i class="ti ti-cake" style="font-size:18px;color:var(--purple-text)" aria-hidden="true"></i>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (overdue.length) {
+    html += `<div class="today-section"><div class="section-label" style="margin-bottom:10px;">Reach out</div>`;
+    overdue.slice(0,6).forEach(f=>{
+      const clr = avatarColor(f.id % 6);
+      html += `<div class="today-card">
+        <div class="avatar" style="background:${clr.bg};color:${clr.fg};">${initials(f.name)}</div>
+        <div class="today-card-body" onclick="openDetail(${f.id})">
+          <div class="today-card-name">${f.name}</div>
+          <div class="today-card-reason">Last seen ${lastContactLabel(f)} · Goal: ${FREQ_LABEL[f.freq]}</div>
+        </div>
+        <button class="log-quick-btn" onclick="openLog(${f.id})">Log</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (dueSoon.length) {
+    html += `<div class="today-section"><div class="section-label" style="margin-bottom:10px;">Due soon</div>`;
+    dueSoon.slice(0,4).forEach(f=>{
+      const clr = avatarColor(f.id % 6);
+      html += `<div class="today-card">
+        <div class="avatar" style="background:${clr.bg};color:${clr.fg};">${initials(f.name)}</div>
+        <div class="today-card-body" onclick="openDetail(${f.id})">
+          <div class="today-card-name">${f.name}</div>
+          <div class="today-card-reason">Last seen ${lastContactLabel(f)}</div>
+        </div>
+        <button class="log-quick-btn" onclick="openLog(${f.id})" style="background:var(--bg2);color:var(--text);border:0.5px solid var(--border2);">Log</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (withEvents.length) {
+    html += `<div class="today-section"><div class="section-label" style="margin-bottom:10px;">Life events to remember</div>`;
+    withEvents.forEach(f=>{
+      const clr = avatarColor(f.id % 6);
+      html += `<div class="today-card" onclick="openDetail(${f.id})">
+        <div class="avatar" style="background:${clr.bg};color:${clr.fg};">${initials(f.name)}</div>
+        <div class="today-card-body">
+          <div class="today-card-name">${f.name}</div>
+          <div class="today-card-reason">${f.events}</div>
+        </div>
+        <i class="ti ti-calendar-event" style="font-size:18px;color:var(--text3)" aria-hidden="true"></i>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!overdue.length && !dueSoon.length && !upcoming.length) {
+    html += `<div class="empty-state"><i class="ti ti-confetti" aria-hidden="true"></i>You're all caught up! Everyone's been contacted recently.</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// FRIENDS
+function renderFriends() {
+  const q = (document.getElementById('search-input')||{}).value||'';
+  const groups = [...new Set(friends.map(f=>f.group).filter(Boolean))];
+
+  let pills = `<button class="pill ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">All</button>`;
+  pills += `<button class="pill ${activeFilter==='close'?'active':''}" onclick="setFilter('close')">Close</button>`;
+  pills += `<button class="pill ${activeFilter==='good'?'active':''}" onclick="setFilter('good')">Good</button>`;
+  pills += `<button class="pill ${activeFilter==='casual'?'active':''}" onclick="setFilter('casual')">Casual</button>`;
+  groups.forEach(g => { pills += `<button class="pill ${activeFilter===g?'active':''}" onclick="setFilter('${g}')">${g}</button>`; });
+  document.getElementById('filter-pills').innerHTML = pills;
+
+  let filtered = friends.filter(f=>{
+    const matchQ = !q || f.name.toLowerCase().includes(q.toLowerCase()) || (f.group||'').toLowerCase().includes(q.toLowerCase());
+    const matchF = activeFilter==='all' || f.tier===activeFilter || f.group===activeFilter;
+    return matchQ && matchF;
+  });
+
+  const sorted = filtered.sort((a,b)=>(TIER_ORDER[a.tier]-TIER_ORDER[b.tier])||a.name.localeCompare(b.name));
+
+  if (!sorted.length) {
+    document.getElementById('friends-content').innerHTML = `<div class="empty-state"><i class="ti ti-user-search" aria-hidden="true"></i>No friends found. Add one!</div>`;
+    return;
+  }
+
+  const grouped = {};
+  sorted.forEach(f=>{ const t=f.tier; if(!grouped[t]) grouped[t]=[]; grouped[t].push(f); });
+  const tierLabel = {close:'Close friends',good:'Good friends',casual:'Casual'};
+
+  let html = '';
+  ['close','good','casual'].forEach(tier=>{
+    if (!grouped[tier]) return;
+    if (activeFilter==='all'||activeFilter===tier) html += `<div class="tier-header">${tierLabel[tier]}</div>`;
+    html += `<div class="friend-list">`;
+    grouped[tier].forEach(f=>{
+      const clr = avatarColor(f.id % 6);
+      const h = health(f);
+      html += `<div class="friend-row" onclick="openDetail(${f.id})">
+        <div class="avatar" style="background:${clr.bg};color:${clr.fg};">${initials(f.name)}</div>
+        <div class="friend-row-body">
+          <div class="friend-row-name">${f.name}</div>
+          <div class="friend-row-sub">${f.group||''}${f.group&&f.loc?' · ':''}${f.loc||''} · ${lastContactLabel(f)}</div>
+        </div>
+        <div class="health-dot dot-${h}"></div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  document.getElementById('friends-content').innerHTML = html;
+}
+
+function setFilter(f) { activeFilter = f; renderFriends(); }
+
+// STATS
+function renderStats() {
+  const total = friends.length;
+  const close = friends.filter(f=>f.tier==='close').length;
+  const good = friends.filter(f=>f.tier==='good').length;
+  const casual = friends.filter(f=>f.tier==='casual').length;
+  const green = friends.filter(f=>health(f)==='green').length;
+  const amber = friends.filter(f=>health(f)==='amber').length;
+  const red = friends.filter(f=>health(f)==='red').length;
+  const totalLogs = friends.reduce((s,f)=>s+(f.interactions||[]).length,0);
+  const avgRating = (() => {
+    const rated = friends.flatMap(f=>(f.interactions||[]).filter(i=>i.rating));
+    if (!rated.length) return '–';
+    return (rated.reduce((s,i)=>s+i.rating,0)/rated.length).toFixed(1);
+  })();
+
+  const mostActive = [...friends].sort((a,b)=>(b.interactions||[]).length-(a.interactions||[]).length)[0];
+  const groups = [...new Set(friends.map(f=>f.group).filter(Boolean))];
+
+  let html = `
+  <div class="stat-row">
+    <div class="stat-card"><div class="stat-label">Total friends</div><div class="stat-val">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Interactions logged</div><div class="stat-val">${totalLogs}</div></div>
+    <div class="stat-card"><div class="stat-label">On track</div><div class="stat-val" style="color:#639922">${green}</div></div>
+    <div class="stat-card"><div class="stat-label">Need attention</div><div class="stat-val" style="color:#E24B4A">${red}</div></div>
+  </div>
+  <div class="today-section">
+    <div class="section-label" style="margin-bottom:10px;">By tier</div>
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:14px;">
+      ${[['close','Close','var(--purple-text)'],['good','Good','var(--teal-text)'],['casual','Casual','var(--text2)']].map(([k,l,c])=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border);">
+        <span style="font-size:14px;color:${c};flex:1;">${l}</span>
+        <div style="height:6px;border-radius:3px;background:${c};width:${Math.round(({close,good,casual}[k]||0)/total*120)}px;min-width:4px;opacity:0.7;"></div>
+        <span style="font-size:14px;font-weight:500;min-width:20px;text-align:right;">${{close,good,casual}[k]||0}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="today-section">
+    <div class="section-label" style="margin-bottom:10px;">Friendship health</div>
+    <div style="background:var(--bg2);border-radius:var(--radius);padding:14px;">
+      ${[['green','On track','#639922'],[`amber`,'Due soon','#BA7517'],['red','Overdue','#E24B4A']].map(([k,l,c])=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:0.5px solid var(--border);">
+        <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;"></div>
+        <span style="font-size:14px;flex:1;">${l}</span>
+        <div style="height:6px;border-radius:3px;background:${c};width:${Math.round(({green,amber,red}[k]||0)/total*120)}px;min-width:4px;opacity:0.7;"></div>
+        <span style="font-size:14px;font-weight:500;min-width:20px;text-align:right;">${{green,amber,red}[k]||0}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  ${groups.length?`<div class="today-section"><div class="section-label" style="margin-bottom:10px;">Groups</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${groups.map(g=>`<span class="badge badge-teal">${g} · ${friends.filter(f=>f.group===g).length}</span>`).join('')}</div></div>`:''}
+  ${mostActive?`<div class="today-section"><div class="section-label" style="margin-bottom:10px;">Most time spent with</div><div class="today-card" onclick="openDetail(${mostActive.id})"><div class="avatar" style="background:${avatarColor(mostActive.id%6).bg};color:${avatarColor(mostActive.id%6).fg};">${initials(mostActive.name)}</div><div class="today-card-body"><div class="today-card-name">${mostActive.name}</div><div class="today-card-reason">${(mostActive.interactions||[]).length} interactions logged · avg rating ${avgRating}</div></div></div></div>`:''}
+  `;
+  document.getElementById('stats-content').innerHTML = html;
+}
+
+// DETAIL
+function openDetail(id) {
+  currentDetailId = id;
+  const f = friends.find(x=>x.id===id);
+  if (!f) return;
+  const clr = avatarColor(f.id % 6);
+  const h = health(f);
+  const healthLabel = {green:'On track',amber:'Due soon',red:'Reach out'};
+  const healthClass = {green:'badge-green',amber:'badge-amber',red:'badge-red'};
+  const ints = [...(f.interactions||[])].sort((a,b)=>b.date.localeCompare(a.date));
+
+  let html = `
+  <div class="detail-hero">
+    <div class="avatar-lg" style="background:${clr.bg};color:${clr.fg};">${initials(f.name)}</div>
+    <div>
+      <div class="detail-name">${f.name}</div>
+      <div class="detail-meta">${f.group||''}${f.group&&f.tier?' · ':''}${f.tier?.charAt(0).toUpperCase()+f.tier?.slice(1)||''} friend</div>
+      <div style="margin-top:6px;"><span class="badge ${healthClass[h]}">${healthLabel[h]}</span></div>
+    </div>
+  </div>
+
+  <div class="detail-action-row">
+    <button class="btn-full primary" onclick="openLog(${f.id})"><i class="ti ti-plus" style="font-size:16px;vertical-align:-2px;margin-right:4px" aria-hidden="true"></i>Log contact</button>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-section-title">About</div>
+    <div class="detail-card">
+      ${f.loc?`<div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-map-pin" aria-hidden="true"></i></span><span class="detail-row-val">${f.loc}</span></div>`:''}
+      ${f.job?`<div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-briefcase" aria-hidden="true"></i></span><span class="detail-row-val">${f.job}</span></div>`:''}
+      ${f.rel?`<div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-heart" aria-hidden="true"></i></span><span class="detail-row-val">${f.rel}</span></div>`:''}
+      ${f.bday?`<div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-cake" aria-hidden="true"></i></span><span class="detail-row-val">${f.bday} ${daysUntilBirthday(f.bday)!==null?`<span style="color:var(--text3);font-size:12px;">(in ${daysUntilBirthday(f.bday)} days)</span>`:''}</span></div>`:''}
+      ${f.family?`<div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-users" aria-hidden="true"></i></span><span class="detail-row-val">${f.family}</span></div>`:''}
+      ${f.hobbies?`<div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-star" aria-hidden="true"></i></span><span class="detail-row-val">${f.hobbies}</span></div>`:''}
+      <div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-repeat" aria-hidden="true"></i></span><span class="detail-row-val">Goal: ${FREQ_LABEL[f.freq]}</span></div>
+      <div class="detail-row-item"><span class="detail-row-label"><i class="ti ti-clock" aria-hidden="true"></i></span><span class="detail-row-val">Last contact: ${lastContactLabel(f)}</span></div>
+    </div>
+  </div>
+
+  ${f.events?`<div class="detail-section"><div class="detail-section-title">Upcoming</div><div class="notes-block"><i class="ti ti-calendar-event" style="font-size:15px;vertical-align:-2px;margin-right:6px" aria-hidden="true"></i>${f.events}</div></div>`:''}
+  ${f.notes?`<div class="detail-section"><div class="detail-section-title">Notes</div><div class="notes-block">${f.notes}</div></div>`:''}
+
+  ${(f.wishlist||'').trim()?`<div class="detail-section">
+    <div class="detail-section-title">To do together</div>
+    <div style="display:flex;flex-wrap:wrap;">
+      ${f.wishlist.split('\n').filter(Boolean).map(w=>`<span class="wish-tag"><i class="ti ti-checkbox" style="font-size:13px;vertical-align:-1px;margin-right:4px" aria-hidden="true"></i>${w.trim()}</span>`).join('')}
+    </div>
+  </div>`:''}
+
+  ${(f.spots||'').trim()?`<div class="detail-section"><div class="detail-section-title">Past hangout spots</div><div style="display:flex;flex-wrap:wrap;">${f.spots.split(',').filter(Boolean).map(s=>`<span class="wish-tag">${s.trim()}</span>`).join('')}</div></div>`:''}
+
+  <div class="detail-section">
+    <div class="detail-section-title">${ints.length} interaction${ints.length!==1?'s':''}</div>
+    ${ints.length?`<div class="detail-card">${ints.map(i=>`
+      <div class="log-item">
+        <div class="log-item-top">
+          <span class="log-type-label">${i.type}${i.place?` · ${i.place}`:''}</span>
+          <span class="log-date-label">${i.date}</span>
+        </div>
+        ${i.rating?`<div class="rating-stars">${[1,2,3,4,5].map(s=>`<span class="${s<=i.rating?'star':'star empty'}">★</span>`).join('')}</div>`:''}
+        ${i.notes?`<div class="log-note-label">${i.notes}</div>`:''}
+      </div>`).join('')}</div>`:`<div style="font-size:14px;color:var(--text3);padding:12px 0;">No interactions yet — log your first one!</div>`}
+  </div>
+  `;
+
+  document.getElementById('detail-content').innerHTML = html;
+  document.getElementById('detail-view').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detail-view').classList.remove('open');
+  renderFriends();
+  renderToday();
+}
+
+// ADD/EDIT
+function openAddFriend() {
+  editingId = null;
+  document.getElementById('friend-modal-title').textContent = 'Add friend';
+  document.getElementById('delete-btn').style.display = 'none';
+  ['f-name','f-group','f-loc','f-bday','f-job','f-hobbies','f-family','f-events','f-notes','f-wishlist','f-spots'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-tier').value = 'close';
+  document.getElementById('f-freq').value = 'monthly';
+  document.getElementById('f-rel').value = '';
+  switchTab('basic');
+  openModal('friend-modal');
+}
+
+function openEditFriend(id) {
+  const f = friends.find(x=>x.id===id);
+  if (!f) return;
+  editingId = id;
+  document.getElementById('friend-modal-title').textContent = 'Edit friend';
+  document.getElementById('delete-btn').style.display = 'block';
+  document.getElementById('delete-confirm').style.display = 'none';
+  document.getElementById('f-name').value = f.name||'';
+  document.getElementById('f-tier').value = f.tier||'close';
+  document.getElementById('f-group').value = f.group||'';
+  document.getElementById('f-loc').value = f.loc||'';
+  document.getElementById('f-freq').value = f.freq||'monthly';
+  document.getElementById('f-bday').value = f.bday||'';
+  document.getElementById('f-rel').value = f.rel||'';
+  document.getElementById('f-job').value = f.job||'';
+  document.getElementById('f-hobbies').value = f.hobbies||'';
+  document.getElementById('f-family').value = f.family||'';
+  document.getElementById('f-events').value = f.events||'';
+  document.getElementById('f-notes').value = f.notes||'';
+  document.getElementById('f-wishlist').value = f.wishlist||'';
+  document.getElementById('f-spots').value = f.spots||'';
+  switchTab('basic');
+  openModal('friend-modal');
+}
+
+function saveFriend() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+  const data = {
+    name, tier:document.getElementById('f-tier').value, group:document.getElementById('f-group').value.trim(),
+    loc:document.getElementById('f-loc').value.trim(), freq:document.getElementById('f-freq').value,
+    bday:document.getElementById('f-bday').value, rel:document.getElementById('f-rel').value,
+    job:document.getElementById('f-job').value.trim(), hobbies:document.getElementById('f-hobbies').value.trim(),
+    family:document.getElementById('f-family').value.trim(), events:document.getElementById('f-events').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(), wishlist:document.getElementById('f-wishlist').value.trim(),
+    spots:document.getElementById('f-spots').value.trim()
+  };
+  if (editingId) {
+    const idx = friends.findIndex(x=>x.id===editingId);
+    if (idx>-1) friends[idx] = {...friends[idx], ...data};
+    currentDetailId = editingId;
+  } else {
+    const newF = {...data, id: Date.now(), interactions:[]};
+    friends.push(newF);
+    currentDetailId = newF.id;
+  }
+  save(); closeModal('friend-modal');
+  if (editingId) openDetail(currentDetailId);
+  renderFriends(); renderToday();
+}
+
+function showDeleteConfirm() {
+  document.getElementById('delete-confirm').style.display = 'block';
+  document.getElementById('delete-btn').style.display = 'none';
+}
+function cancelDelete() {
+  document.getElementById('delete-confirm').style.display = 'none';
+  document.getElementById('delete-btn').style.display = 'block';
+}
+function confirmDelete() {
+  friends = friends.filter(f=>f.id!==editingId);
+  save(); closeModal('friend-modal'); closeDetail();
+  renderFriends(); renderToday();
+}
+
+// LOG
+function openLog(id) {
+  const f = friends.find(x=>x.id===id);
+  if (!f) return;
+  logTargetId = id;
+  document.getElementById('log-modal-title').textContent = `Log · ${f.name}`;
+  document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('log-place').value = '';
+  document.getElementById('log-notes').value = '';
+  currentRating = 0;
+  updateStars();
+  openModal('log-modal');
+}
+
+function setRating(n) { currentRating = n; updateStars(); }
+function updateStars() {
+  document.querySelectorAll('#star-input span').forEach((s,i)=>{ s.classList.toggle('on', i<currentRating); });
+}
+
+function saveLog() {
+  const f = friends.find(x=>x.id===logTargetId);
+  if (!f) return;
+  if (!f.interactions) f.interactions = [];
+  f.interactions.push({
+    date: document.getElementById('log-date').value,
+    type: document.getElementById('log-type').value,
+    place: document.getElementById('log-place').value.trim(),
+    rating: currentRating||null,
+    notes: document.getElementById('log-notes').value.trim()
+  });
+  save(); closeModal('log-modal');
+  if (currentDetailId===logTargetId) openDetail(logTargetId);
+  renderToday();
+}
+
+// Tabs
+function switchTab(tab) {
+  currentTab = tab;
+  ['basic','details','wishlist'].forEach(t=>{
+    document.getElementById('tab-pane-'+t).style.display = t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+// Modal helpers
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function modalBgClick(e, id) { if (e.target===document.getElementById(id)) closeModal(id); }
+
+load();
+renderToday();
+</script>
+</body>
+</html>
